@@ -1,0 +1,182 @@
+/*
+   DollersElectro-inspired theme tokens applied to PySide6 widgets.
+   Mirrors the provided light/dark palette and button system.
+*/
+
+* {
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    color: #e5e7eb;
+    outline: none;
+}
+
+QMainWindow {
+    background: transparent;
+}
+
+QWidget#CentralWidget {
+    background: transparent;
+    border-radius: 30px;
+}
+
+QWidget#Sidebar {
+    background-color: #101426;
+    border-top-left-radius: 30px;
+    border-bottom-left-radius: 30px;
+    border-right: 1px solid #1f2937;
+}
+
+QLabel#Logo {
+    color: #e5e7eb;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    margin-bottom: 24px;
+}
+
+QPushButton#SidebarButton {
+    text-align: left;
+    padding: 12px 18px;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    color: #cbd5e1;
+    font-size: 14px;
+    font-weight: 700;
+    background-color: transparent;
+    margin: 4px 12px;
+}
+
+QPushButton#SidebarButton:hover {
+    background-color: rgba(255, 255, 255, 0.06);
+    color: #e5e7eb;
+}
+
+QPushButton#SidebarButton:checked {
+    background-color: #3b82f6;
+    border-color: #3b82f6;
+    color: #ffffff;
+}
+
+QFrame#MetricCard, QFrame#ContentCard, QFrame#RuleCard {
+    background-color: #101426;
+    border-radius: 16px;
+    border: 1px solid #1f2937;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+QLabel#PageTitle {
+    color: #e5e7eb;
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+}
+
+QLabel#SectionTitle {
+    color: #e5e7eb;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+QLabel#MetricValue {
+    color: #e5e7eb;
+    font-size: 26px;
+    font-weight: 800;
+}
+
+QLabel#MetricLabel {
+    color: #cbd5e1;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+QLabel#BodySecondary {
+    color: #cbd5e1;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+QTableWidget {
+    background-color: transparent;
+    alternate-background-color: rgba(255, 255, 255, 0.06);
+    border: none;
+    color: #e5e7eb;
+    gridline-color: #1f2937;
+}
+
+QHeaderView::section {
+    background-color: transparent;
+    padding: 12px;
+    border: none;
+    color: #cbd5e1;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+QComboBox, QLineEdit {
+    background-color: #101426;
+    border: 1px solid #1f2937;
+    border-radius: 10px;
+    padding: 10px;
+    color: #e5e7eb;
+}
+
+QComboBox::drop-down {
+    border: none;
+}
+
+/* Base button system */
+QPushButton {
+    background-color: #101426;
+    color: #e5e7eb;
+    border: 1px solid #1f2937;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-weight: 600;
+}
+
+QPushButton:hover {
+    background-color: rgba(255, 255, 255, 0.06);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+QPushButton:pressed {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+QPushButton:disabled {
+    opacity: 0.6;
+    box-shadow: none;
+}
+
+/* Primary CTA */
+QPushButton#GlowBtn {
+    background-color: #2563eb;
+    color: #ffffff;
+    border: 1px solid #2563eb;
+    border-radius: 12px;
+    padding: 12px 22px;
+    font-weight: 700;
+}
+
+QPushButton#GlowBtn:hover {
+    filter: brightness(0.97);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+}
+
+QPushButton#GlowBtn:pressed {
+    transform: translateY(1px);
+}
+
+/* Secondary/table action */
+QPushButton#TableActionBtn {
+    background-color: transparent;
+    color: #2563eb;
+    border: 1px solid #1f2937;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-weight: 700;
+}
+
+QPushButton#TableActionBtn:hover {
+    background-color: rgba(255, 255, 255, 0.06);
+}
