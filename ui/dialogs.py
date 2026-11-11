@@ -330,17 +330,147 @@ class ProductCreateDialog(QDialog):
         # Keep reasonable length
         return text[:1200]
 
+    def _absolute_url(self, url: str, base_url: str) -> str:
+        if not url:
+            return ""
+        url = url.strip()
+        if url.startswith('//'):
+            return 'https:' + url
+        if url.startswith('/'):
+            parsed = urlparse(base_url)
+            return f"{parsed.scheme}://{parsed.netloc}{url}"
+        return url
+
+    def _extract_meta_content(self, soup: BeautifulSoup, *selectors: tuple[str, dict]) -> str:
+        for tag_name, attrs in selectors:
+            elem = soup.find(tag_name, attrs=attrs)
+            if elem:
+                content = elem.get('content', '').strip()
+                if content:
+                    return content
+        return ""
+
+    def _fetch_shopify_fallback(self, url: str, headers: dict) -> dict:
+        parsed = urlparse(url)
+        path = parsed.path.rstrip('/')
+        if '/products/' not in path:
+            return {}
+
+        product_js_url = f"{parsed.scheme}://{parsed.netloc}{path}.js"
+        response = requests.get(product_js_url, headers=headers, timeout=15, allow_redirects=True)
+        response.raise_for_status()
+
+        try:
+            shopify_data = response.json()
+        except Exception:
+            shopify_data = json.loads(response.text)
+
+        page_response = requests.get(url, headers=headers, timeout=15, allow_redirects=True)
+        page_soup = BeautifulSoup(page_response.text, 'html.parser')
+
+        data: dict = {}
+        title = str(shopify_data.get('title', '')).strip()
+        if title:
+            data['title'] = title[:255]
+
+        description = str(shopify_data.get('description', '')).strip()
+        if description:
+            data['description'] = BeautifulSoup(description, 'html.parser').get_text(separator=' ', strip=True)[:2000]
+
+        variants = shopify_data.get('variants') or []
+        if variants:
+            first_variant = variants[0] or {}
+            price = first_variant.get('price', '')
+            if price:
+                try:
+                    data['price'] = float(price) / 100.0
+                except Exception:
+                    pass
+
+        currency = self._extract_meta_content(
+            page_soup,
+            ('meta', {'property': 'product:price:currency'}),
+            ('meta', {'property': 'og:price:currency'}),
+        )
+        if currency:
+            data['currency'] = currency
+
+        images = []
+        media_items = shopify_data.get('media') or []
+        if isinstance(media_items, list):
+            image_media = []
+            for item in media_items:
+                if not isinstance(item, dict):
+                    continue
+                if item.get('media_type') not in ('image', 'photo'):
+                    continue
+                image_url = item.get('src') or item.get('preview_image', {}).get('src')
+                if image_url:
+                    position = item.get('position')
+                    try:
+                        position = int(position)
+                    except Exception:
+                        position = 999999
+                    image_media.append((position, image_url))
+
+            image_media.sort(key=lambda entry: entry[0])
+            for _, image in image_media[:11]:
+                image_url = self._absolute_url(str(image), url)
+                if image_url:
+                    images.append(image_url)
+
+        if not images:
+            for image in shopify_data.get('images', []) or []:
+                image_url = self._absolute_url(str(image), url)
+                if image_url:
+                    images.append(image_url)
+
+        if not images:
+            image = shopify_data.get('image')
+            if isinstance(image, dict):
+                image = image.get('src') or image.get('url')
+            image_url = self._absolute_url(str(image or ''), url)
+            if image_url:
+                images.append(image_url)
+
+        data['images'] = images
+        data['category'] = str(shopify_data.get('product_type', '') or '').strip()[:100]
+        return data
+
     def _fetch_product_from_url(self, url: str) -> dict:
         """Scrape complete product data from the given URL - all images, description, currency."""
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Cache-Control': 'no-cache',
         }
-        # Follow redirects for short URLs (like ebay.us)
+        url = url.strip().strip('"').strip("'")
+
+        # Follow redirects for short URLs (like ebay.us) and try a Shopify JSON fallback if the page is blocked.
         response = requests.get(url, headers=headers, timeout=15, allow_redirects=True)
+        final_url = response.url
+        parsed_final = urlparse(final_url)
+        is_shopify_product = '/products/' in parsed_final.path and (
+            'shopify' in response.text.lower() or 'cdn.shopify.com' in response.text.lower()
+        )
+        if is_shopify_product:
+            try:
+                fallback = self._fetch_shopify_fallback(final_url, headers)
+                if fallback:
+                    return fallback
+            except Exception:
+                pass
+        if response.status_code in (401, 403):
+            try:
+                fallback = self._fetch_shopify_fallback(url, headers)
+                if fallback:
+                    return fallback
+            except Exception:
+                pass
         response.raise_for_status()
         
         # Get the final URL after redirects
-        final_url = response.url
         is_ebay = 'ebay.com' in final_url or 'ebay.us' in url or 'ebay.co.uk' in final_url or 'ebay.' in final_url
         
         soup = BeautifulSoup(response.content, 'html.parser')
@@ -467,6 +597,13 @@ class ProductCreateDialog(QDialog):
                     description = str(ld_data['description'])[:2000]
             except:
                 pass
+
+        if not description:
+            description = self._extract_meta_content(
+                soup,
+                ('meta', {'property': 'og:description'}),
+                ('meta', {'name': 'description'}),
+            )[:2000]
         
         data["description"] = description
         
@@ -509,6 +646,20 @@ class ProductCreateDialog(QDialog):
                         images.append(img_data)
             except:
                 pass
+
+        if not images:
+            for selector in (
+                ('meta', {'property': 'og:image:secure_url'}),
+                ('meta', {'property': 'og:image'}),
+                ('meta', {'property': 'og:image:url'}),
+                ('meta', {'name': 'twitter:image'}),
+                ('meta', {'name': 'twitter:image:src'}),
+            ):
+                img_url = self._extract_meta_content(soup, selector)
+                if img_url:
+                    img_url = self._absolute_url(img_url, final_url)
+                    if img_url and img_url not in images:
+                        images.append(img_url)
         
         # Strategy 2: Find gallery/carousel containers - eBay specific first
         gallery_selectors = []
@@ -540,8 +691,7 @@ class ProductCreateDialog(QDialog):
                     for button in container.find_all(['button', 'div'], attrs={'data-zoom-src': True}):
                         img_url = button.get('data-zoom-src')
                         if img_url:
-                            if img_url.startswith('//'):
-                                img_url = 'https:' + img_url
+                            img_url = self._absolute_url(img_url, final_url)
                             img_url = upgrade_ebay_image_url(img_url)
                             base_url = clean_url_for_comparison(img_url)
                             if (base_url not in seen_base_urls and
@@ -558,12 +708,7 @@ class ProductCreateDialog(QDialog):
                     )
                     
                     if img_url:
-                        # Clean URL
-                        if img_url.startswith('//'):
-                            img_url = 'https:' + img_url
-                        elif img_url.startswith('/'):
-                            parsed = urlparse(final_url)
-                            img_url = f"{parsed.scheme}://{parsed.netloc}{img_url}"
+                        img_url = self._absolute_url(img_url, final_url)
                         
                         # Upgrade eBay images to high-res
                         if is_ebay:
@@ -608,11 +753,7 @@ class ProductCreateDialog(QDialog):
                         elem.get('data-zoom-image') or elem.get('data-src') or elem.get('src')
                     )
                     if img_url:
-                        if img_url.startswith('//'):
-                            img_url = 'https:' + img_url
-                        elif img_url.startswith('/'):
-                            parsed = urlparse(final_url)
-                            img_url = f"{parsed.scheme}://{parsed.netloc}{img_url}"
+                        img_url = self._absolute_url(img_url, final_url)
                         
                         # Upgrade eBay images to high-res
                         if is_ebay:

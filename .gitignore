@@ -1,0 +1,34 @@
+# macOS metadata
+.DS_Store
+._*
+
+# Python generated files and local environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Credentials and local configuration
+.env
+.env.*
+!.env.example
+.vscode/
+.idea/
+*.log
+
+# Desktop runtime data and downloaded image exports
+/ApplicationData/
+/edus/
+
+# Local notes and shortcuts; shared launchers are in run-scripts/
+/temp_patch.txt
+/run.bat
+/run.command
+
+# Independently versioned and hosted web app
+/auraflow-web/
