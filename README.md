@@ -1,62 +1,19 @@
-# auraflow-dropshipping-platform
+# AuraFlow apps
 
-AURAFLOW PRO is an AI-powered dropshipping automation and analytics platform built with Django for data management and PySide6 for a rich desktop UI.
+The two apps are kept in separate folders:
 
-## Features
+| Folder | App |
+| --- | --- |
+| `auraflow-web/` | AuraWeb website, hosted on Vercel. This folder has its own Git repository and deployment setup. |
+| `local-app/` | AURAFLOW PRO desktop app, built with Python, Django, and PySide6. |
 
-- Product management with rich image support
-- Auto-fill product details from supplier URLs
-- Order and shipment tracking
-- Marketplace integrations (eBay OAuth flow support)
-- Built-in analytics and dashboards
-- One-click run scripts for macOS and Windows
+## Run the local desktop app
 
-## Project Structure
+- **macOS:** open `local-app/run-scripts/run.command`.
+- **Windows:** open `local-app/run-scripts/run.bat`.
 
-- `main.py`: Desktop app entry point (PySide6 UI)
-- `manage.py`: Django management entry point
-- `config/`: Django settings and URL configuration
-- `core/`: Core models and background scheduler
-- `products/`: Product models, services, and UI hooks
-- `orders/`: Orders domain models and services
-- `shipments/`: Shipment domain models and services
-- `analytics/`: Analytics models and services
-- `marketplaces/`: Marketplace integration clients
-- `ui/`: PySide6 UI components and dialogs
-- `run-scripts/`: One-click launchers for macOS and Windows
+For manual setup, open a terminal in `local-app/` and follow [the desktop app README](local-app/README.md).
 
-## Requirements
+The desktop app's source code, Python environment (`.venv/`), database, images, and other runtime data (`ApplicationData/`) are all inside `local-app/`. Open that folder in your editor when working on the desktop app; for example, the product dialog is now `local-app/ui/product_detail_dialog.py`.
 
-- Python 3.10+
-- macOS or Windows
-
-All Python dependencies are listed in `requirements.txt`.
-
-## Quick Start
-
-### macOS
-
-1. Open `run-scripts/run.command`
-2. The script will create a virtual environment, install dependencies, and run the app.
-
-If you see a macOS security prompt, right-click the file and choose Open.
-
-### Windows
-
-1. Open `run-scripts/run.bat`
-2. The script will create a virtual environment, install dependencies, and run the app.
-
-## Manual Setup
-
-1. Create a virtual environment
-2. Install dependencies from `requirements.txt`
-3. Run the app via `main.py`
-
-## Notes
-
-- The UI uses Qt styles; some CSS-like properties may be ignored by Qt on certain platforms.
-- If both PySide6 and PyQt6 are installed, you may see warnings about overlapping classes; they are safe to ignore.
-
-## License
-
-Private project. All rights reserved.
+`edus/` contains unrelated local archives and remains in its original location.

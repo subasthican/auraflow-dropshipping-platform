@@ -22,13 +22,13 @@ htmlcov/
 *.log
 
 # Desktop runtime data and downloaded image exports
-/ApplicationData/
+/local-app/ApplicationData/
 /edus/
 
-# Local notes and shortcuts; shared launchers are in run-scripts/
-/temp_patch.txt
-/run.bat
-/run.command
+# Local notes and shortcuts; shared launchers are in local-app/run-scripts/
+/local-app/temp_patch.txt
+/local-app/run.bat
+/local-app/run.command
 
 # Independently versioned and hosted web app
 /auraflow-web/
